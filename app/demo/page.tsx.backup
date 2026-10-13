@@ -1,0 +1,1786 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
+/* ========================================
+   AUTOMATED SURGICARE DEMO
+
+   IMPORTANT:
+   This page is presentation-only.
+   It does NOT write to Supabase.
+======================================== */
+
+const STEP_MS = 4200;
+
+type DemoStep =
+  | "login"
+  | "authenticating"
+  | "dashboard"
+  | "facility"
+  | "analyzing"
+  | "recommendation"
+  | "mission"
+  | "deploying"
+  | "clinician_dashboard"
+  | "scheduled"
+  | "checked_in"
+  | "cleared"
+  | "in_progress"
+  | "completed"
+  | "followup"
+  | "referral"
+  | "finished";
+
+const steps: DemoStep[] = [
+  "login",
+  "authenticating",
+  "dashboard",
+  "facility",
+  "analyzing",
+  "recommendation",
+  "mission",
+  "deploying",
+  "clinician_dashboard",
+  "scheduled",
+  "checked_in",
+  "cleared",
+  "in_progress",
+  "completed",
+  "followup",
+  "referral",
+  "finished",
+];
+
+const captions: Record<DemoStep, string> = {
+  login:
+    "SurgiCare provides secure, role-based access for the care team.",
+
+  authenticating:
+    "Authenticating the coordinator and preparing the correct workspace.",
+
+  dashboard:
+    "The Control Tower provides a live overview of facilities, patients and surgical readiness.",
+
+  facility:
+    "Asunafo Vision Centre has one registered patient who is ready for surgery.",
+
+  analyzing:
+    "The Recommendation Engine analyzes patient volume and surgical readiness.",
+
+  recommendation:
+    "Asunafo South is identified as an outreach opportunity with a surgery-ready cataract patient.",
+
+  mission:
+    "Before deployment, the coordinator confirms seven operational readiness requirements.",
+
+  deploying:
+    "All readiness requirements are satisfied. The outreach mission can now be deployed.",
+
+  clinician_dashboard:
+    "The deployed mission is now visible to the clinical team, creating a direct handoff from coordination to care delivery.",
+
+  scheduled:
+    "Akua Sarfowaa enters Mission Operations as a scheduled cataract patient.",
+
+  checked_in:
+    "Akua arrives at the outreach mission and is checked in.",
+
+  cleared:
+    "Clinical clearance confirms that the patient can proceed to surgery.",
+
+  in_progress:
+    "The cataract procedure is now in progress.",
+
+  completed:
+    "The procedure is completed and SurgiCare continues tracking the patient beyond surgery.",
+
+  followup:
+    "Structured post-operative follow-ups keep the patient connected to care.",
+
+  referral:
+    "A Day 1 complication is detected and referral is recorded for escalation.",
+
+  finished:
+    "SurgiCare connects identification, outreach planning, surgery and follow-up in one continuous care pathway.",
+};
+
+export default function DemoPage() {
+  const [started, setStarted] =
+    useState(false);
+
+  const [playing, setPlaying] =
+    useState(false);
+
+  const [stepIndex, setStepIndex] =
+    useState(0);
+
+  const step = steps[stepIndex];
+
+  const progress =
+    ((stepIndex + 1) / steps.length) *
+    100;
+
+  useEffect(() => {
+    if (!started || !playing) {
+      return;
+    }
+
+    if (stepIndex >= steps.length - 1) {
+      setPlaying(false);
+      return;
+    }
+
+    const timer = window.setTimeout(
+      () => {
+        setStepIndex((current) =>
+          Math.min(
+            current + 1,
+            steps.length - 1
+          )
+        );
+      },
+      step === "authenticating" ||
+        step === "analyzing" ||
+        step === "deploying"
+        ? 3000
+        : STEP_MS
+    );
+
+    return () =>
+      window.clearTimeout(timer);
+  }, [started, playing, stepIndex, step]);
+
+  function startDemo() {
+    setStepIndex(0);
+    setStarted(true);
+    setPlaying(true);
+  }
+
+  function restartDemo() {
+    setStepIndex(0);
+    setPlaying(true);
+  }
+
+  function next() {
+    setStepIndex((current) =>
+      Math.min(
+        current + 1,
+        steps.length - 1
+      )
+    );
+  }
+
+  function previous() {
+    setStepIndex((current) =>
+      Math.max(current - 1, 0)
+    );
+  }
+
+  if (!started) {
+    return <StartScreen onStart={startDemo} />;
+  }
+
+  return (
+    <main className="min-h-screen bg-[#f6faf8] text-[#10233c]">
+      {/* PROGRESS */}
+
+      <div className="fixed left-0 right-0 top-0 z-[70] h-1 bg-[#dce8e4]">
+        <div
+          className="h-full bg-[#087f6b] transition-all duration-700"
+          style={{
+            width: `${progress}%`,
+          }}
+        />
+      </div>
+
+      {/* DEMO BADGE */}
+
+      <div className="fixed right-5 top-5 z-[80] rounded-full border border-[#b9ded3] bg-white/95 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#087f6b] shadow-sm backdrop-blur">
+        ● Demo Simulation
+      </div>
+
+      <DemoScene step={step} />
+
+      {/* NARRATION */}
+
+      <div className="fixed bottom-0 left-0 right-0 z-[60] border-t border-[#dfe9e5] bg-white/95 shadow-[0_-10px_40px_rgba(15,35,50,0.08)] backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between md:px-8">
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e7f6f1] text-xs font-bold text-[#087f6b]">
+                {stepIndex + 1}
+              </span>
+
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#087f6b]">
+                Automated walkthrough
+              </p>
+            </div>
+
+            <p className="mt-2 text-sm leading-6 text-[#52635d]">
+              {captions[step]}
+            </p>
+          </div>
+
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={previous}
+              disabled={stepIndex === 0}
+              className="rounded-xl border border-[#dfe9e5] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-30"
+            >
+              ←
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setPlaying((value) => !value)
+              }
+              className="rounded-xl border border-[#b9ded3] bg-[#eef9f5] px-5 py-2 text-sm font-semibold text-[#087f6b]"
+            >
+              {playing
+                ? "Pause"
+                : "Resume"}
+            </button>
+
+            {stepIndex <
+            steps.length - 1 ? (
+              <button
+                type="button"
+                onClick={next}
+                className="rounded-xl bg-[#087f6b] px-5 py-2 text-sm font-semibold text-white"
+              >
+                Next →
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={restartDemo}
+                className="rounded-xl bg-[#087f6b] px-5 py-2 text-sm font-semibold text-white"
+              >
+                Restart
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+/* ========================================
+   SCENE ROUTER
+======================================== */
+
+function DemoScene({
+  step,
+}: {
+  step: DemoStep;
+}) {
+  if (
+    step === "login" ||
+    step === "authenticating"
+  ) {
+    return <LoginScene step={step} />;
+  }
+
+  if (
+    step === "dashboard" ||
+    step === "facility"
+  ) {
+    return (
+      <DashboardScene step={step} />
+    );
+  }
+
+  if (
+    step === "analyzing" ||
+    step === "recommendation"
+  ) {
+    return (
+      <RecommendationScene step={step} />
+    );
+  }
+
+  if (
+    step === "mission" ||
+    step === "deploying"
+  ) {
+    return <MissionScene step={step} />;
+  }
+
+  if (step === "clinician_dashboard") {
+    return <ClinicianDashboardScene />;
+  }
+
+  if (
+    step === "scheduled" ||
+    step === "checked_in" ||
+    step === "cleared" ||
+    step === "in_progress" ||
+    step === "completed" ||
+    step === "followup" ||
+    step === "referral"
+  ) {
+    return (
+      <OperationsScene step={step} />
+    );
+  }
+
+  return <FinishedScene />;
+}
+
+/* ========================================
+   START
+======================================== */
+
+function StartScreen({
+  onStart,
+}: {
+  onStart: () => void;
+}) {
+  return (
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#071a25] px-6 text-white">
+      <div className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-[#087f6b]/20 blur-3xl" />
+
+      <div className="absolute -bottom-52 -right-32 h-[600px] w-[600px] rounded-full bg-[#10a88b]/10 blur-3xl" />
+
+      <div className="relative z-10 w-full max-w-5xl text-center">
+        <Logo large />
+
+        <p className="mt-8 text-sm font-bold uppercase tracking-[0.3em] text-[#55d6bb]">
+          SurgiCare
+        </p>
+
+        <h1 className="mx-auto mt-5 max-w-4xl text-5xl font-bold tracking-tight md:text-7xl">
+          One patient.
+          <br />
+          One connected care journey.
+        </h1>
+
+        <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-slate-300">
+          Watch SurgiCare automatically
+          demonstrate the complete pathway
+          from outreach intelligence to
+          surgery and post-operative care.
+        </p>
+
+        <button
+          type="button"
+          onClick={onStart}
+          className="mt-10 rounded-2xl bg-[#10a88b] px-9 py-4 text-base font-bold text-white shadow-2xl transition hover:scale-[1.02] hover:bg-[#0d9279]"
+        >
+          Start Automated Demo →
+        </button>
+
+        <p className="mt-5 text-sm text-slate-500">
+          Presentation simulation · No
+          clinical records will be changed
+        </p>
+      </div>
+    </main>
+  );
+}
+
+/* ========================================
+   LOGIN
+======================================== */
+
+function LoginScene({
+  step,
+}: {
+  step: DemoStep;
+}) {
+  const authenticating =
+    step === "authenticating";
+
+  return (
+    <div className="grid min-h-screen pb-28 lg:grid-cols-2">
+      <section className="relative hidden overflow-hidden bg-[#087f6b] p-14 text-white lg:flex lg:flex-col lg:justify-between">
+        <div className="absolute -left-28 -top-28 h-80 w-80 rounded-full bg-white/5" />
+
+        <div className="relative z-10 flex items-center gap-3">
+          <Logo />
+
+          <div>
+            <h1 className="text-2xl font-bold">
+              SurgiCare
+            </h1>
+
+            <p className="text-sm text-emerald-100">
+              Mobile Eye-Care Network
+            </p>
+          </div>
+        </div>
+
+        <div className="relative z-10 max-w-xl">
+          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]">
+            Smarter outreach
+          </span>
+
+          <h2 className="mt-6 text-5xl font-bold leading-tight">
+            Bringing essential eye care
+            closer to the communities that
+            need it.
+          </h2>
+
+          <p className="mt-5 max-w-lg leading-7 text-emerald-50">
+            Coordinate facilities, patients,
+            surgical outreach and
+            post-operative care through one
+            connected platform.
+          </p>
+        </div>
+
+        <p className="relative z-10 text-sm text-emerald-100">
+          Secure clinical operations
+        </p>
+      </section>
+
+      <section className="flex items-center justify-center bg-[#f6faf8] px-6">
+        <div className="w-full max-w-md rounded-3xl border border-[#dfe9e5] bg-white p-8 shadow-xl shadow-slate-200/50">
+          <p className="text-sm font-semibold text-[#087f6b]">
+            Welcome back
+          </p>
+
+          <h2 className="mt-2 text-3xl font-bold">
+            Sign in to SurgiCare
+          </h2>
+
+          <p className="mt-3 text-sm leading-6 text-[#65756f]">
+            Secure access to your assigned
+            workspace.
+          </p>
+
+          <div className="mt-8 space-y-4">
+            <DemoInput
+              label="Email"
+              value="priscillaantwiwaaduah@gmail.com"
+            />
+
+            <DemoInput
+              label="Password"
+              value="••••••••••••"
+            />
+          </div>
+
+          <button className="mt-6 w-full rounded-xl bg-[#087f6b] py-3.5 font-semibold text-white">
+            Login
+          </button>
+
+          <div className="my-6 flex items-center gap-4">
+            <div className="h-px flex-1 bg-[#dfe9e5]" />
+            <span className="text-xs font-semibold uppercase text-[#8b9994]">
+              Or
+            </span>
+            <div className="h-px flex-1 bg-[#dfe9e5]" />
+          </div>
+
+          <button
+            className={`flex w-full items-center justify-center gap-3 rounded-xl border py-3.5 text-sm font-semibold transition ${
+              authenticating
+                ? "border-[#87c9b7] bg-[#eef9f5] text-[#087f6b]"
+                : "border-[#dfe9e5] bg-white"
+            }`}
+          >
+            {authenticating ? (
+              <>
+                <Spinner />
+                Authenticating...
+              </>
+            ) : (
+              <>
+                <GoogleIcon />
+                Continue with Google
+              </>
+            )}
+          </button>
+
+          {authenticating && (
+            <div className="mt-5 rounded-xl bg-[#eef9f5] p-4 text-sm text-[#08705f]">
+              ✓ Google account verified
+              <br />
+              <span className="text-xs">
+                Loading coordinator
+                workspace...
+              </span>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/* ========================================
+   DASHBOARD
+======================================== */
+
+function DashboardScene({
+  step,
+}: {
+  step: DemoStep;
+}) {
+  const highlight =
+    step === "facility";
+
+  return (
+    <AppShell
+      subtitle="Control Tower"
+      user="Priscilla Duah"
+      role="admin"
+    >
+      <section className="overflow-hidden rounded-3xl bg-[#087f6b]">
+        <div className="relative px-7 py-9 md:px-10">
+          <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/5" />
+
+          <div className="relative">
+            <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">
+              Coordinator Workspace
+            </span>
+
+            <h2 className="mt-4 text-3xl font-bold text-white md:text-4xl">
+              Welcome, Priscilla
+            </h2>
+
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-emerald-50">
+              Monitor the SurgiCare network,
+              review facilities and prepare
+              patient populations for outreach
+              clustering and mission planning.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-7">
+        <p className="text-sm font-semibold text-[#087f6b]">
+          Network overview
+        </p>
+
+        <h3 className="mt-1 text-2xl font-bold">
+          SurgiCare at a glance
+        </h3>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          <Metric label="Facilities" value="1" />
+          <Metric label="Pending" value="0" />
+          <Metric label="Approved" value="1" />
+          <Metric label="Rejected" value="0" />
+          <Metric label="Patients" value="1" />
+          <Metric
+            label="Ready now"
+            value="1"
+            green
+          />
+        </div>
+      </section>
+
+      <section className="mt-7 overflow-hidden rounded-3xl border border-[#dfe9e5] bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e5eeea] p-6">
+          <div>
+            <p className="text-sm font-semibold text-[#087f6b]">
+              Control Tower
+            </p>
+
+            <h3 className="mt-1 text-2xl font-bold">
+              Facility network
+            </h3>
+          </div>
+
+          <div className="flex gap-3">
+            <div className="rounded-2xl border border-[#b9ded3] bg-[#eef9f5] px-5 py-3">
+              <p className="text-xs font-semibold uppercase text-[#087f6b]">
+                Outreach intelligence
+              </p>
+              <p className="mt-1 text-sm font-bold">
+                Recommendation Engine →
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-[#10233c] px-5 py-3 text-white">
+              <p className="text-xs uppercase text-[#a8c8c0]">
+                Mission operations
+              </p>
+              <p className="mt-1 text-sm font-bold">
+                Mission Control →
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className={`m-5 rounded-2xl border p-5 transition-all duration-700 ${
+            highlight
+              ? "scale-[1.01] border-[#087f6b] bg-[#eef9f5] shadow-lg shadow-emerald-100"
+              : "border-[#dfe9e5]"
+          }`}
+        >
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                <h4 className="text-lg font-bold">
+                  Asunafo Vision Centre
+                </h4>
+
+                <span className="rounded-full bg-[#e7f6f1] px-3 py-1 text-xs font-bold text-[#087f6b]">
+                  ✓ Approved
+                </span>
+              </div>
+
+              <p className="mt-2 text-sm text-[#65756f]">
+                Asunafo South · Ahafo Region
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <SmallMetric
+                label="Patients"
+                value="1"
+              />
+
+              <SmallMetric
+                label="Ready"
+                value="1"
+                green
+              />
+            </div>
+          </div>
+
+          {highlight && (
+            <div className="mt-4 rounded-xl bg-white p-4 text-sm font-medium text-[#08705f]">
+              ✓ Surgery-ready patient
+              identified for outreach
+              planning.
+            </div>
+          )}
+        </div>
+      </section>
+    </AppShell>
+  );
+}
+
+/* ========================================
+   RECOMMENDATIONS
+======================================== */
+
+function RecommendationScene({
+  step,
+}: {
+  step: DemoStep;
+}) {
+  const analyzing =
+    step === "analyzing";
+
+  return (
+    <AppShell
+      subtitle="Recommendation Engine"
+      user="Priscilla Duah"
+      role="coordinator"
+    >
+      <section className="overflow-hidden rounded-3xl bg-[#087f6b]">
+        <div className="px-7 py-9 md:px-10">
+          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">
+            Human-guided intelligence
+          </span>
+
+          <h2 className="mt-4 text-3xl font-bold text-white md:text-4xl">
+            Outreach Cluster Engine
+          </h2>
+
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-emerald-50">
+            Analyze patient backlog,
+            surgical readiness, facility
+            capacity and outreach priority
+            before deploying a mission.
+          </p>
+
+          <button className="mt-6 rounded-xl bg-white px-5 py-3 font-semibold text-[#087f6b]">
+            {analyzing
+              ? "Generating..."
+              : "✓ Recommendations generated"}
+          </button>
+        </div>
+      </section>
+
+      <section className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <Metric label="Clusters" value="1" />
+        <Metric label="Proposed" value="1" />
+        <Metric label="Deployed" value="0" />
+        <Metric label="On hold" value="0" />
+        <Metric
+          label="Ready patients"
+          value="1"
+          green
+        />
+      </section>
+
+      {analyzing ? (
+        <section className="mt-7 rounded-3xl border border-[#dfe9e5] bg-white p-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <Spinner large />
+
+            <h3 className="mt-5 text-2xl font-bold">
+              Analyzing outreach data
+            </h3>
+
+            <p className="mt-2 text-sm text-[#65756f]">
+              Patient volume · Surgical
+              readiness · Facility capacity
+            </p>
+
+            <div className="mt-7 h-3 overflow-hidden rounded-full bg-[#e7efec]">
+              <div className="h-full w-[82%] animate-pulse rounded-full bg-[#087f6b]" />
+            </div>
+
+            <p className="mt-3 text-xs font-semibold text-[#087f6b]">
+              Building priority clusters...
+            </p>
+          </div>
+        </section>
+      ) : (
+        <>
+          <section className="mt-7 rounded-3xl border border-[#dfe9e5] bg-white p-6">
+            <p className="text-sm font-semibold text-[#087f6b]">
+              Transparent MVP scoring
+            </p>
+
+            <h3 className="mt-1 text-2xl font-bold">
+              How recommendations are
+              ranked
+            </h3>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              <Score
+                value="40"
+                title="Patient volume"
+              />
+              <Score
+                value="40"
+                title="Ready patients"
+              />
+              <Score
+                value="20"
+                title="Readiness percentage"
+              />
+            </div>
+          </section>
+
+          <section className="mt-6 rounded-3xl border-2 border-[#87c9b7] bg-white p-6 shadow-lg shadow-emerald-100/50">
+            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+              <div>
+                <span className="rounded-full bg-[#e7f6f1] px-3 py-1 text-xs font-bold text-[#087f6b]">
+                  RECOMMENDED
+                </span>
+
+                <h3 className="mt-4 text-xl font-bold">
+                  Asunafo South Outreach
+                  Cluster
+                </h3>
+
+                <p className="mt-2 text-sm text-[#65756f]">
+                  Asunafo Vision Centre ·
+                  Ahafo Region
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <SmallMetric
+                  label="Patients"
+                  value="1"
+                />
+                <SmallMetric
+                  label="Ready"
+                  value="1"
+                  green
+                />
+                <SmallMetric
+                  label="Cataract"
+                  value="1"
+                />
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+    </AppShell>
+  );
+}
+
+/* ========================================
+   MISSION PLANNING
+======================================== */
+
+function MissionScene({
+  step,
+}: {
+  step: DemoStep;
+}) {
+  const deploying =
+    step === "deploying";
+
+  const readiness = [
+    "Post-op facility confirmed",
+    "Referral pathway confirmed",
+    "Consumables confirmed",
+    "Facility notifications sent",
+    "Equipment confirmed",
+    "Transport confirmed",
+    "Patient notifications sent",
+  ];
+
+  return (
+    <AppShell
+      subtitle="Mission Control"
+      user="Priscilla Duah"
+      role="coordinator"
+    >
+      <div className="grid gap-7 lg:grid-cols-[1fr_0.8fr]">
+        <section>
+          <p className="text-sm font-semibold text-[#087f6b]">
+            Mission planning
+          </p>
+
+          <h2 className="mt-1 text-3xl font-bold">
+            Asunafo South Outreach Cluster
+            Mission
+          </h2>
+
+          <p className="mt-3 text-sm text-[#65756f]">
+            Asunafo Vision Centre · Ahafo
+            Region
+          </p>
+
+          <div className="mt-7 grid gap-4 sm:grid-cols-3">
+            <Metric
+              label="Patients"
+              value="1"
+            />
+            <Metric
+              label="Ready"
+              value="1"
+              green
+            />
+            <Metric
+              label="Cataract"
+              value="1"
+            />
+          </div>
+
+          <div className="mt-7 rounded-3xl border border-[#dfe9e5] bg-white p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#087f6b]">
+              Mission readiness
+            </p>
+
+            <h3 className="mt-2 text-xl font-bold">
+              Deployment checklist
+            </h3>
+
+            <div className="mt-5 space-y-3">
+              {readiness.map(
+                (item, index) => (
+                  <div
+                    key={item}
+                    className="flex items-center justify-between rounded-xl bg-[#f6faf8] px-4 py-3"
+                  >
+                    <span className="text-sm font-medium">
+                      {item}
+                    </span>
+
+                    <span
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-[#087f6b] text-sm font-bold text-white"
+                      style={{
+                        animationDelay: `${
+                          index * 100
+                        }ms`,
+                      }}
+                    >
+                      ✓
+                    </span>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="flex items-center">
+          <div className="w-full rounded-3xl bg-[#10233c] p-8 text-white shadow-xl">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#9fc9bf]">
+              Deployment readiness
+            </p>
+
+            <div className="mt-6 flex items-end gap-3">
+              <span className="text-6xl font-bold">
+                7
+              </span>
+              <span className="pb-2 text-xl text-slate-400">
+                / 7
+              </span>
+            </div>
+
+            <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full w-full rounded-full bg-[#10a88b]" />
+            </div>
+
+            <p className="mt-5 text-sm leading-6 text-slate-300">
+              Every operational requirement
+              has been confirmed.
+            </p>
+
+            <button
+              className={`mt-7 w-full rounded-xl py-4 font-bold transition ${
+                deploying
+                  ? "bg-[#10a88b] text-white"
+                  : "bg-white text-[#10233c]"
+              }`}
+            >
+              {deploying
+                ? "✓ MISSION DEPLOYED"
+                : "Deploy Mission →"}
+            </button>
+
+            {deploying && (
+              <div className="mt-4 rounded-xl bg-white/10 p-4 text-sm text-[#9ff0d9]">
+                Akua Sarfowaa has been added
+                to the mission patient roster.
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+    </AppShell>
+  );
+}
+
+/* ========================================
+   CLINICIAN DASHBOARD
+======================================== */
+
+function ClinicianDashboardScene() {
+  return (
+    <AppShell
+      subtitle="Eye-Care Outreach"
+      user="Felix Yeboah"
+      role="clinician"
+    >
+      {/* CLINICIAN HERO */}
+
+      <section className="relative overflow-hidden rounded-3xl bg-[#087f6b] px-7 py-8 text-white md:px-10 md:py-10">
+        <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/5" />
+
+        <div className="relative z-10">
+          <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
+            Clinician Workspace
+          </span>
+
+          <h2 className="mt-4 text-3xl font-bold md:text-4xl">
+            Welcome, Felix
+          </h2>
+
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-emerald-50 md:text-base">
+            Manage your facility, registered patients and active
+            surgical outreach missions from one clinical workspace.
+          </p>
+        </div>
+      </section>
+
+      {/* FACILITY + STATS */}
+
+      <section className="mt-7 rounded-3xl border border-[#dfe9e5] bg-white p-6">
+        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-[#087f6b]">
+              Your facility
+            </p>
+
+            <h3 className="mt-1 text-2xl font-bold text-[#10233c]">
+              Asunafo Vision Centre
+            </h3>
+
+            <p className="mt-2 text-sm text-[#65756f]">
+              Asunafo South · Ahafo Region
+            </p>
+          </div>
+
+          <span className="w-fit rounded-full bg-[#e7f6f1] px-4 py-2 text-xs font-bold text-[#087f6b]">
+            ✓ Verified
+          </span>
+        </div>
+      </section>
+
+      <section className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Metric
+          label="Facility status"
+          value="Verified"
+        />
+
+        <Metric
+          label="Patients registered"
+          value="1"
+        />
+
+        <Metric
+          label="Ready for surgery"
+          value="1"
+          green
+        />
+
+        <Metric
+          label="Active missions"
+          value="1"
+          green
+        />
+      </section>
+
+      {/* ACTIVE MISSION HANDOFF */}
+
+      <section className="mt-8">
+        <div>
+          <p className="text-sm font-semibold text-[#087f6b]">
+            Your workspace
+          </p>
+
+          <h3 className="mt-1 text-2xl font-bold text-[#10233c]">
+            Outreach management
+          </h3>
+        </div>
+
+        <div className="mt-5 overflow-hidden rounded-3xl border border-[#a9d8cc] bg-white shadow-sm">
+          <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-7">
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="rounded-full bg-[#e7f6f1] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#087f6b]">
+                  Active Mission
+                </span>
+
+                <span className="rounded-full bg-[#edf5ff] px-3 py-1 text-xs font-semibold text-[#3569a8]">
+                  1 patient
+                </span>
+              </div>
+
+              <h4 className="mt-4 text-xl font-bold text-[#10233c] md:text-2xl">
+                Asunafo South Outreach Cluster Mission
+              </h4>
+
+              <p className="mt-2 text-sm text-[#65756f]">
+                Asunafo Vision Centre
+              </p>
+
+              <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                <span className="text-[#52635d]">
+                  <strong className="text-[#10233c]">
+                    Ready:
+                  </strong>{" "}
+                  1
+                </span>
+
+                <span className="text-[#52635d]">
+                  <strong className="text-[#10233c]">
+                    Procedure:
+                  </strong>{" "}
+                  Cataract
+                </span>
+
+                <span className="text-[#52635d]">
+                  <strong className="text-[#10233c]">
+                    Status:
+                  </strong>{" "}
+                  Deployed
+                </span>
+              </div>
+            </div>
+
+            <div className="shrink-0">
+              <div className="rounded-xl bg-[#087f6b] px-7 py-4 text-center font-semibold text-white shadow-sm">
+                Open Mission Operations →
+              </div>
+
+              <p className="mt-2 text-center text-xs font-medium text-[#087f6b]">
+                ✓ Mission assigned to clinical team
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </AppShell>
+  );
+}
+
+/* ========================================
+   OPERATIONS
+======================================== */
+
+function OperationsScene({
+  step,
+}: {
+  step: DemoStep;
+}) {
+  const state = useMemo(() => {
+    switch (step) {
+      case "checked_in":
+        return {
+          status: "Checked In",
+          action: "Clear for Procedure",
+          completed: false,
+        };
+
+      case "cleared":
+        return {
+          status: "Cleared",
+          action: "Start Procedure",
+          completed: false,
+        };
+
+      case "in_progress":
+        return {
+          status: "In Procedure",
+          action: "Complete Procedure",
+          completed: false,
+        };
+
+      case "completed":
+      case "followup":
+      case "referral":
+        return {
+          status: "Completed",
+          action: null,
+          completed: true,
+        };
+
+      default:
+        return {
+          status: "Scheduled",
+          action: "Check In",
+          completed: false,
+        };
+    }
+  }, [step]);
+
+  const checkedIn =
+    step !== "scheduled";
+
+  const inProcedure =
+    step === "in_progress";
+
+  const showFollowup =
+    step === "followup" ||
+    step === "referral";
+
+  const referral =
+    step === "referral";
+
+  return (
+    <AppShell
+      subtitle="Mission Operations"
+      user="Clinical Team"
+      role="clinician"
+    >
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#087f6b]">
+          Active outreach mission
+        </p>
+
+        <h2 className="mt-2 text-3xl font-bold">
+          Asunafo South Outreach Cluster
+          Mission
+        </h2>
+
+        <p className="mt-2 text-sm text-[#65756f]">
+          Asunafo Vision Centre
+        </p>
+      </div>
+
+      <section className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <Metric label="Scheduled" value="1" />
+
+        <Metric
+          label="Checked In"
+          value={checkedIn ? "1" : "0"}
+        />
+
+        <Metric
+          label="In Procedure"
+          value={inProcedure ? "1" : "0"}
+        />
+
+        <Metric
+          label="Completed"
+          value={
+            state.completed ? "1" : "0"
+          }
+          green={state.completed}
+        />
+
+        <Metric label="No-show" value="0" />
+      </section>
+
+      <section className="mt-8">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#087f6b]">
+          Live operations
+        </p>
+
+        <h2 className="mt-1 text-2xl font-bold">
+          Patient Roster
+        </h2>
+
+        <article className="mt-5 rounded-3xl border border-[#dfe9e5] bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-3">
+                <h3 className="text-xl font-bold">
+                  Akua Sarfowaa
+                </h3>
+
+                <StatusPill
+                  status={state.status}
+                />
+              </div>
+
+              <p className="mt-2 text-sm font-medium text-[#087f6b]">
+                Asunafo Vision Centre
+              </p>
+
+              <div className="mt-4 flex flex-wrap gap-x-7 gap-y-2 text-sm text-[#65756f]">
+                <span>
+                  <strong className="text-[#10233c]">
+                    Procedure:
+                  </strong>{" "}
+                  Cataract
+                </span>
+
+                <span>
+                  <strong className="text-[#10233c]">
+                    Eye:
+                  </strong>{" "}
+                  Right Eye
+                </span>
+
+                <span>
+                  <strong className="text-[#10233c]">
+                    Age:
+                  </strong>{" "}
+                  45
+                </span>
+              </div>
+
+              {state.completed && (
+                <div className="mt-5 rounded-xl bg-[#eef9f5] p-4 text-sm font-medium text-[#08705f]">
+                  ✓ Procedure completed
+                  successfully. Post-operative
+                  follow-up pathway activated.
+                </div>
+              )}
+
+              {showFollowup && (
+                <PostOp
+                  referral={referral}
+                />
+              )}
+            </div>
+
+            <div className="shrink-0 lg:w-60">
+              {state.action && (
+                <button
+                  className={`w-full rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-sm ${
+                    inProcedure
+                      ? "bg-[#10233c]"
+                      : "bg-[#087f6b]"
+                  }`}
+                >
+                  {state.action}
+                </button>
+              )}
+
+              {step === "checked_in" && (
+                <p className="mt-3 text-center text-xs font-semibold text-[#087f6b]">
+                  ✓ Patient checked in
+                </p>
+              )}
+
+              {step === "cleared" && (
+                <p className="mt-3 text-center text-xs font-semibold text-[#087f6b]">
+                  ✓ Clinical clearance
+                  complete
+                </p>
+              )}
+
+              {step === "in_progress" && (
+                <div className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-[#315b9a]">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-[#315b9a]" />
+                  PROCEDURE IN PROGRESS
+                </div>
+              )}
+            </div>
+          </div>
+        </article>
+      </section>
+    </AppShell>
+  );
+}
+
+/* ========================================
+   POST OP
+======================================== */
+
+function PostOp({
+  referral,
+}: {
+  referral: boolean;
+}) {
+  return (
+    <div className="mt-6 border-t border-[#dfe9e5] pt-5">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#087f6b]">
+        Post-Op Follow-Up
+      </p>
+
+      <div className="mt-4 space-y-3">
+        <Followup
+          title="Day 1"
+          date="20 Sep 2026"
+          status={
+            referral ? "Referred" : "Due"
+          }
+          visualAcuity={
+            referral ? "6/24" : "Pending"
+          }
+          alert={referral}
+        />
+
+        <Followup
+          title="Week 1"
+          date="26 Sep 2026"
+          status="Due"
+          visualAcuity="Pending"
+        />
+
+        <Followup
+          title="Month 1"
+          date="19 Oct 2026"
+          status="Due"
+          visualAcuity="Pending"
+        />
+      </div>
+
+      {referral && (
+        <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-lg">
+              !
+            </span>
+
+            <div>
+              <p className="font-bold text-amber-900">
+                Clinical escalation
+                required
+              </p>
+
+              <p className="mt-1 text-sm leading-6 text-amber-800">
+                Day 1 visual acuity:
+                <strong> 6/24</strong>.
+                Complication recorded and
+                referral required.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ========================================
+   FINISH
+======================================== */
+
+function FinishedScene() {
+  const journey = [
+    "Facility",
+    "Patient",
+    "Recommendation",
+    "Mission",
+    "Surgery",
+    "Follow-up",
+    "Referral",
+  ];
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#071a25] px-6 pb-28 text-white">
+      <div className="w-full max-w-6xl text-center">
+        <Logo large />
+
+        <p className="mt-7 text-sm font-bold uppercase tracking-[0.25em] text-[#55d6bb]">
+          Complete care loop
+        </p>
+
+        <h1 className="mx-auto mt-5 max-w-4xl text-5xl font-bold tracking-tight md:text-6xl">
+          From identification to recovery.
+        </h1>
+
+        <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-300">
+          SurgiCare connects fragmented
+          outreach activities into one
+          coordinated patient pathway.
+        </p>
+
+        <div className="mx-auto mt-10 flex max-w-5xl flex-wrap items-center justify-center gap-2">
+          {journey.map((item, index) => (
+            <div
+              key={item}
+              className="flex items-center gap-2"
+            >
+              <div className="rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold">
+                ✓ {item}
+              </div>
+
+              {index <
+                journey.length - 1 && (
+                <span className="text-[#55d6bb]">
+                  →
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="mx-auto mt-10 max-w-3xl rounded-3xl border border-[#10a88b]/30 bg-[#10a88b]/10 p-6">
+          <p className="text-sm font-semibold text-[#7ee6cf]">
+            One connected system
+          </p>
+
+          <p className="mt-2 text-xl font-bold">
+            Better coordination. Better
+            continuity. Better outreach.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ========================================
+   SHELL
+======================================== */
+
+function AppShell({
+  subtitle,
+  user,
+  role,
+  children,
+}: {
+  subtitle: string;
+  user: string;
+  role: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-h-screen pb-32">
+      <header className="border-b border-[#dfe9e5] bg-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
+          <div className="flex items-center gap-3">
+            <Logo />
+
+            <div>
+              <h1 className="text-xl font-bold">
+                SurgiCare
+              </h1>
+
+              <p className="text-xs font-medium text-[#087f6b]">
+                {subtitle}
+              </p>
+            </div>
+          </div>
+
+          <div className="mr-40 hidden text-right sm:block">
+            <p className="text-sm font-semibold">
+              {user}
+            </p>
+
+            <p className="text-xs capitalize text-[#65756f]">
+              {role}
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-7xl px-5 py-8 md:px-8">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ========================================
+   SMALL COMPONENTS
+======================================== */
+
+function Logo({
+  large = false,
+}: {
+  large?: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-center rounded-2xl bg-[#087f6b] text-white ${
+        large
+          ? "mx-auto h-20 w-20"
+          : "h-11 w-11"
+      }`}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        className={
+          large
+            ? "h-11 w-11"
+            : "h-6 w-6"
+        }
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path
+                  d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"
+                />
+                <circle cx="12" cy="12" r="2.5" />
+      </svg>
+    </div>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  green = false,
+}: {
+  label: string;
+  value: string;
+  green?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-2xl border p-4 ${
+        green
+          ? "border-[#b9ded3] bg-[#eef9f5]"
+          : "border-[#dfe9e5] bg-white"
+      }`}
+    >
+      <p className="text-xs font-medium text-[#65756f]">
+        {label}
+      </p>
+
+      <p
+        className={`mt-2 text-2xl font-bold ${
+          green
+            ? "text-[#087f6b]"
+            : "text-[#10233c]"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function SmallMetric({
+  label,
+  value,
+  green = false,
+}: {
+  label: string;
+  value: string;
+  green?: boolean;
+}) {
+  return (
+    <div
+      className={`min-w-24 rounded-xl px-4 py-3 text-center ${
+        green
+          ? "bg-[#e7f6f1]"
+          : "bg-[#f2f6f4]"
+      }`}
+    >
+      <p className="text-xs text-[#65756f]">
+        {label}
+      </p>
+
+      <p
+        className={`mt-1 text-lg font-bold ${
+          green
+            ? "text-[#087f6b]"
+            : ""
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function Score({
+  value,
+  title,
+}: {
+  value: string;
+  title: string;
+}) {
+  return (
+    <div className="rounded-2xl bg-[#f6faf8] p-5">
+      <p className="text-3xl font-bold text-[#087f6b]">
+        {value}
+      </p>
+
+      <p className="mt-2 text-sm font-bold">
+        {title}
+      </p>
+    </div>
+  );
+}
+
+function StatusPill({
+  status,
+}: {
+  status: string;
+}) {
+  const active =
+    status === "Completed" ||
+    status === "Cleared";
+
+  return (
+    <span
+      className={`rounded-full px-3 py-1 text-xs font-bold ${
+        active
+          ? "bg-[#e7f6f1] text-[#087f6b]"
+          : status === "In Procedure"
+          ? "bg-[#e8f0ff] text-[#315b9a]"
+          : "bg-[#eef2f8] text-[#40546d]"
+      }`}
+    >
+      {status}
+    </span>
+  );
+}
+
+function Followup({
+  title,
+  date,
+  status,
+  visualAcuity,
+  alert = false,
+}: {
+  title: string;
+  date: string;
+  status: string;
+  visualAcuity: string;
+  alert?: boolean;
+}) {
+  return (
+    <div
+      className={`grid gap-3 rounded-xl border p-4 sm:grid-cols-4 sm:items-center ${
+        alert
+          ? "border-amber-200 bg-amber-50"
+          : "border-[#dfe9e5] bg-[#f9fbfa]"
+      }`}
+    >
+      <div>
+        <p className="text-xs text-[#65756f]">
+          Follow-up
+        </p>
+        <p className="font-bold">
+          {title}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-xs text-[#65756f]">
+          Scheduled
+        </p>
+        <p className="text-sm font-semibold">
+          {date}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-xs text-[#65756f]">
+          Visual acuity
+        </p>
+        <p className="text-sm font-semibold">
+          {visualAcuity}
+        </p>
+      </div>
+
+      <div>
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-bold ${
+            alert
+              ? "bg-amber-100 text-amber-800"
+              : "bg-[#eef2f8] text-[#52635d]"
+          }`}
+        >
+          {status}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function DemoInput({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-semibold">
+        {label}
+      </label>
+
+      <div className="rounded-xl border border-[#dfe9e5] bg-[#fbfdfc] px-4 py-3.5 text-sm text-[#52635d]">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function Spinner({
+  large = false,
+}: {
+  large?: boolean;
+}) {
+  return (
+    <span
+      className={`inline-block animate-spin rounded-full border-[#cce9df] border-t-[#087f6b] ${
+        large
+          ? "h-12 w-12 border-4"
+          : "h-5 w-5 border-2"
+      }`}
+    />
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <path
+        fill="#4285F4"
+        d="M21.6 12.23c0-.71-.06-1.4-.18-2.07H12v3.92h5.38a4.6 4.6 0 0 1-2 3.02v2.54h3.24c1.9-1.75 2.98-4.33 2.98-7.41z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 22c2.7 0 4.97-.9 6.63-2.36l-3.24-2.54c-.9.6-2.05.96-3.39.96-2.61 0-4.82-1.76-5.61-4.13H3.04v2.62A10 10 0 0 0 12 22z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M6.39 13.93A6 6 0 0 1 6.08 12c0-.67.11-1.32.31-1.93V7.45H3.04A10 10 0 0 0 2 12c0 1.61.38 3.13 1.04 4.55l3.35-2.62z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.94c1.47 0 2.79.5 3.83 1.49l2.87-2.87A9.65 9.65 0 0 0 12 2a10 10 0 0 0-8.96 5.45l3.35 2.62C7.18 7.7 9.39 5.94 12 5.94z"
+      />
+    </svg>
+  );
+}
